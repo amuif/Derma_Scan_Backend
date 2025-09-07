@@ -5,8 +5,7 @@ import {
   Matches,
   MinLength,
 } from 'class-validator';
-
-export class CreateAuthDto {
+export class LoginAuthDto {
   @IsEmail()
   @IsNotEmpty()
   email: string;
@@ -19,9 +18,4 @@ export class CreateAuthDto {
       'Password must contain at least one lowercase, uppercase, number, and special character',
   })
   password: string;
-
-  @IsString()
-  @IsNotEmpty()
-  @MinLength(2)
-  name: string;
 }
