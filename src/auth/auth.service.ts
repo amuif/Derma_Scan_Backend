@@ -17,11 +17,10 @@ export class AuthService {
   }
 
   update(id: number, updateAuthDto: Prisma.UserUpdateInput) {
-    console.log(updateAuthDto);
-    return `This action updates a #${id} auth`;
+    return this.usersService.update(id, updateAuthDto);
   }
 
   remove(id: number) {
-    return `This action removes a #${id} auth`;
+    return this.usersService.delete(id);
   }
 }

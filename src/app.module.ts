@@ -9,6 +9,6 @@ import { DatabaseService } from './database/database.service';
 @Module({
   imports: [ConfigModule.forRoot(), AuthModule, UsersModule, DatabaseModule],
   controllers: [AppController],
-  providers: [AppService,DatabaseService],
+  providers: [AppService, DatabaseService],
 })
 export class AppModule {}
