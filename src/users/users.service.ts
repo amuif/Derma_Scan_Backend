@@ -19,8 +19,10 @@ export class UsersService {
 
   async find(
     loginAuthDto: LoginAuthDto,
-  ): Promise<{ accessToken: string; refreshToken: string }> {
+  ): Promise<{ accessToken: string; user: Omit<User, 'password'> }> {
     const { email, password } = loginAuthDto;
+    console.log(loginAuthDto);
+
     if (!email || !password) {
       throw new BadRequestException('Invalid credentials', {
         cause: new Error(),
@@ -31,6 +33,7 @@ export class UsersService {
     const existingUser = await this.databaseService.user.findUnique({
       where: { email },
     });
+
     if (!existingUser) {
       throw new UnauthorizedException('Invalid email or password');
     }
@@ -39,20 +42,27 @@ export class UsersService {
       password,
       existingUser.password,
     );
+
     if (!doPasswordMatch) {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    const tokens = await this.generateTokens(existingUser);
-    return tokens;
+    const accessToken = await this.generateTokens(existingUser);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password: _password, ...userWithoutPassword } = existingUser;
+
+    return { accessToken, user: userWithoutPassword };
   }
 
-  async create(createAuthDto: Prisma.UserCreateInput): Promise<{
+  async create(
+    createAuthDto: Prisma.UserCreateInput,
+    filename?: string,
+  ): Promise<{
     user: Omit<User, 'password'>;
-    tokens: { accessToken: string; refreshToken: string };
+    tokens: string;
   }> {
-    const { email, password, username, name } = createAuthDto;
-    if (!email || !password || !username || !name) {
+    const { email, password, name } = createAuthDto;
+    if (!email || !password || !name) {
       throw new BadRequestException('Invalid credentials', {
         cause: new Error(),
         description: 'There are missing inputs',
@@ -71,15 +81,14 @@ export class UsersService {
     const user = await this.databaseService.user.create({
       data: {
         email,
-        username: createAuthDto.username,
         name: createAuthDto.name,
         password: hashedPassword,
+        profilePicture: filename ? `/uploads/${filename}` : null,
       },
       select: {
         id: true,
         email: true,
         name: true,
-        username: true,
         createdAt: true,
         profilePicture: true,
         updatedAt: true,
@@ -94,25 +103,44 @@ export class UsersService {
   async update(
     id: number,
     updateDto: Prisma.UserUpdateInput,
-  ): Promise<Partial<User> | null> {
+    file: Express.Multer.File,
+  ): Promise<{ user: Partial<User> | null }> {
+    console.log('id', id);
+    console.log(file);
+    if (!updateDto) {
+      throw new BadRequestException('Update data is required');
+    }
     const user = await this.databaseService.user.findUnique({ where: { id } });
+    console.log('updating', user?.name);
+
     if (!user) {
       throw new NotFoundException('User not found');
     }
 
+    console.log(updateDto);
     let updatedPassword: string | undefined = undefined;
-    if (updateDto.password) {
+
+    if (updateDto.password && typeof updateDto.password === 'string') {
       updatedPassword = await bcrypt.hash(updateDto.password, 10);
+    }
+
+    const updateData: Prisma.UserUpdateInput = {
+      ...updateDto,
+    };
+
+    if (updatedPassword) {
+      updateData.password = updatedPassword;
+    }
+
+    if (file) {
+      updateData.profilePicture = `/uploads/${file.filename}`;
     }
     const updateUser = await this.databaseService.user.update({
       where: { id },
-      data: {
-        ...updateDto,
-        ...(updatedPassword ? { password: updatedPassword } : {}),
-      },
+      data: updateData,
       select: {
+        id: true,
         email: true,
-        username: true,
         profilePicture: true,
         name: true,
         updatedAt: true,
@@ -120,7 +148,7 @@ export class UsersService {
       },
     });
 
-    return updateUser;
+    return { user: updateUser };
   }
 
   async delete(id: number) {
@@ -137,10 +165,7 @@ export class UsersService {
     const accessToken = await this.jwtService.signAsync(payload, {
       expiresIn: '15m',
     });
-    const refreshToken = await this.jwtService.signAsync(payload, {
-      expiresIn: '7d',
-    });
 
-    return { accessToken, refreshToken };
+    return accessToken;
   }
 }

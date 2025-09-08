@@ -12,12 +12,15 @@ export class AuthService {
   }
 
   create(createAuthDto: Prisma.UserCreateInput) {
-    console.log('craeting');
     return this.usersService.create(createAuthDto);
   }
 
-  update(id: number, updateAuthDto: Prisma.UserUpdateInput) {
-    return this.usersService.update(id, updateAuthDto);
+  update(
+    id: number,
+    updateAuthDto: Prisma.UserUpdateInput,
+    file: Express.Multer.File,
+  ) {
+    return this.usersService.update(id, updateAuthDto, file);
   }
 
   remove(id: number) {
