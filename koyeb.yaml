@@ -1,0 +1,9 @@
+name: derma-bun-backend
+services:
+  - name: api
+    ports:
+      - port: 4000
+        protocol: http
+    env:
+      NODE_ENV: production
+    dockerfile: ./Dockerfile
