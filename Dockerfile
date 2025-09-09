@@ -9,16 +9,16 @@ WORKDIR /app
 # Copy package files
 COPY bun.lock package.json ./
 
-# Install dependencies (fast with Bun)
+# Install dependencies
 RUN bun install --frozen-lockfile
 
 # Copy source code
 COPY . .
 
-# Optional: generate prisma client if you use Prisma
-# RUN bunx prisma generate
+# ✅ Generate Prisma client (important!)
+RUN bunx prisma generate
 
-# Build NestJS (this calls "nest build" via package.json)
+# Build NestJS
 RUN bun run build
 
 # ----------------------------
@@ -28,13 +28,12 @@ FROM node:20-slim
 
 WORKDIR /app
 
-# Copy only what's needed for production
+# Copy only what's needed
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 COPY package.json bun.lock ./
 
 EXPOSE 3000
 
-# Use Node to run NestJS
 CMD ["node", "dist/main.js"]
 
