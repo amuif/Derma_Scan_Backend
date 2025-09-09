@@ -1,35 +1,20 @@
-# Use Node.js official image
-FROM node:20-bullseye
+# Use a single stage to avoid copy issues
+FROM oven/bun:1
 
-# Install system dependencies (e.g., openssl)
-RUN apt-get update -y && \
-    apt-get install -y openssl curl && \
-    rm -rf /var/lib/apt/lists/*
-
-# Install pnpm globally
-RUN npm install -g pnpm
-
-# Set working directory
 WORKDIR /app
+# Copy package files first for better caching
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile
 
-# Copy package files for caching
-COPY package.json pnpm-lock.yaml* ./
-
-# Install dependencies
-RUN pnpm install --frozen-lockfile
-
-# Copy the rest of the source code
+# Copy source code
 COPY . .
 
-# Generate Prisma client
-RUN pnpm prisma generate
+RUN apt-get update -y && apt-get install -y openssl
+# Generate Prisma client and build
+RUN bunx prisma generate
+RUN bun run build
 
-# Build the project
-RUN pnpm build
-
-# Expose port
 EXPOSE 4000
 
-# Start the app (adjust path if needed)
-CMD ["node", "dist/src/main.js"]
-
+# Use the actual path where main.js is located
+CMD ["bun", "run", "dist/src/main.js"]
