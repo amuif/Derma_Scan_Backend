@@ -6,7 +6,7 @@ WORKDIR /app
 
 # Copy package files first for better caching
 COPY package.json package-lock.json ./
-RUN npm ci --omit=dev
+# RUN npm ci --omit=dev
 
 # Copy source code
 COPY . .
