@@ -1,29 +1,26 @@
-# Build stage
-FROM node:lts-alpine AS builder
- 
-USER node
-WORKDIR /home/node
- 
-COPY package*.json .
-RUN npm install
 
+# Use official Node.js image
+FROM node:20
+
+WORKDIR /app
+
+# Copy package files first for better caching
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev
+
+# Copy source code
+COPY . .
+
+# Install system dependencies
+RUN apt-get update -y && apt-get install -y openssl
+
+# Generate Prisma client and build
+RUN npm i
 RUN npx prisma generate
+RUN npm run build
 
-COPY --chown=node:node . .
-RUN npm run build && npm prune --omit=dev
- 
-# Final run stage
-FROM node:lts-alpine
- 
-ENV NODE_ENV production
-USER node
-WORKDIR /home/node
- 
-COPY --from=builder --chown=node:node /home/node/package*.json .
-COPY --from=builder --chown=node:node /home/node/node_modules ./node_modules
-COPY --from=builder --chown=node:node /home/node/dist ./dist
- 
-ARG PORT
-EXPOSE ${PORT:-3000}
- 
-CMD ["node", "dist/main.js"]
+EXPOSE 4000
+
+# Use the actual path where main.js is located
+CMD ["node", "dist/src/main.js"]
+
