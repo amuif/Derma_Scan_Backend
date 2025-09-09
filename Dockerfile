@@ -7,9 +7,10 @@ WORKDIR /home/node
 COPY package*.json .
 RUN npm install
 
+RUN npx prisma generate
+
 COPY --chown=node:node . .
 RUN npm run build && npm prune --omit=dev
- 
  
 # Final run stage
 FROM node:lts-alpine
