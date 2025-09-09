@@ -1,20 +1,28 @@
-# Use a single stage to avoid copy issues
-FROM oven/bun:1
-
-WORKDIR /app
-# Copy package files first for better caching
-COPY package.json bun.lock ./
-RUN bun install --frozen-lockfile
-
-# Copy source code
-COPY . .
-
-RUN apt-get update -y && apt-get install -y openssl
-# Generate Prisma client and build
-RUN bunx prisma generate
-RUN bun run build
-
-EXPOSE 4000
-
-# Use the actual path where main.js is located
-CMD ["bun", "run", "dist/src/main.js"]
+# Build stage
+FROM node:lts-alpine AS builder
+ 
+USER node
+WORKDIR /home/node
+ 
+COPY package*.json .
+RUN npm ci
+ 
+COPY --chown=node:node . .
+RUN npm run build && npm prune --omit=dev
+ 
+ 
+# Final run stage
+FROM node:lts-alpine
+ 
+ENV NODE_ENV production
+USER node
+WORKDIR /home/node
+ 
+COPY --from=builder --chown=node:node /home/node/package*.json .
+COPY --from=builder --chown=node:node /home/node/node_modules ./node_modules
+COPY --from=builder --chown=node:node /home/node/dist ./dist
+ 
+ARG PORT
+EXPOSE ${PORT:-3000}
+ 
+CMD ["node", "dist/main.js"]
