@@ -96,3 +96,6 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 ## License
 
 Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+
+## Resources
+-Skin_Disease_Ai - [NadavIs56](https://github.com/NadavIs56/Skin_Disease_AI)

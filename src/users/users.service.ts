@@ -58,9 +58,10 @@ export class UsersService {
     filename?: string,
   ): Promise<{
     user: Omit<User, 'password'>;
-    tokens: string;
+    accessToken: string;
   }> {
     const { email, password, name } = createAuthDto;
+    console.log(createAuthDto)
     if (!email || !password || !name) {
       throw new BadRequestException('Invalid credentials', {
         cause: new Error(),
@@ -96,7 +97,7 @@ export class UsersService {
 
     const tokens = await this.generateTokens(user);
 
-    return { user: user, tokens };
+    return { user: user, accessToken:tokens };
   }
 
   async update(
