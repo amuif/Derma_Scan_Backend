@@ -14,7 +14,7 @@ export class UsersService {
   constructor(
     private readonly databaseService: DatabaseService,
     private readonly jwtService: JwtService,
-  ) {}
+  ) { }
 
   async find(
     loginAuthDto: LoginAuthDto,
@@ -47,6 +47,7 @@ export class UsersService {
     }
 
     const accessToken = await this.generateTokens(existingUser);
+
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: _password, ...userWithoutPassword } = existingUser;
 
@@ -61,7 +62,7 @@ export class UsersService {
     accessToken: string;
   }> {
     const { email, password, name } = createAuthDto;
-    console.log(createAuthDto)
+    console.log(createAuthDto);
     if (!email || !password || !name) {
       throw new BadRequestException('Invalid credentials', {
         cause: new Error(),
@@ -97,7 +98,7 @@ export class UsersService {
 
     const tokens = await this.generateTokens(user);
 
-    return { user: user, accessToken:tokens };
+    return { user: user, accessToken: tokens };
   }
 
   async update(
