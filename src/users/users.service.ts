@@ -14,7 +14,7 @@ export class UsersService {
   constructor(
     private readonly databaseService: DatabaseService,
     private readonly jwtService: JwtService,
-  ) { }
+  ) {}
 
   async find(
     loginAuthDto: LoginAuthDto,

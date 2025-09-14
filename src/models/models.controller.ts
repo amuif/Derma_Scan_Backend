@@ -9,7 +9,6 @@ import {
   UploadedFile,
 } from '@nestjs/common';
 import { ModelsService } from './models.service';
-import { CreateModelDto } from './dto/create-model.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('models')
@@ -19,7 +18,7 @@ export class ModelsController {
   @Post('/image')
   @UseInterceptors(FileInterceptor('file'))
   analyze(
-    @Body() additionalInformation: CreateModelDto,
+    @Body('additionalInformation') additionalInformation: string,
     @UploadedFile() file: Express.Multer.File,
   ) {
     return this.modelsService.create(additionalInformation, file);
