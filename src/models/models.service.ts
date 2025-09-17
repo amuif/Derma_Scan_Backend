@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import FormData from 'form-data';
+import sharp from 'sharp'; // <-- add this
 
 export interface SkinAnalysisResult {
   conditions: string[];
@@ -21,8 +22,20 @@ export class DermService {
   ): Promise<SkinAnalysisResult> {
     console.log('fetched');
     try {
+      // Compress image to be under 5MB
+      let compressedBuffer = await sharp(imageBuffer)
+        .jpeg({ quality: 80 }) // adjust quality as needed
+        .toBuffer();
+
+      // If still too large, reduce quality further
+      while (compressedBuffer.length > 5 * 1024 * 1024) { // 5MB
+        compressedBuffer = await sharp(compressedBuffer)
+          .jpeg({ quality: 70 }) // keep lowering until under 5MB
+          .toBuffer();
+      }
+
       const form = new FormData();
-      form.append('file', imageBuffer, {
+      form.append('file', compressedBuffer, {
         filename: 'lesion.jpg',
         contentType: 'image/jpeg',
       });
@@ -39,10 +52,17 @@ export class DermService {
         ),
       );
 
-      const results = response.data.predictions;
-      console.log(results);
+      const results = response.data?.predictions;
+      console.log('Roboflow predictions:', results);
+
       if (!results || results.length === 0) {
-        throw new Error('No predictions returned');
+        return {
+          conditions: [],
+          confidence: 0,
+          risk: 'low',
+          symptomNote: 'No clear prediction returned by model.',
+          timestamp: new Date(),
+        };
       }
 
       const topPrediction = results[0];
@@ -51,7 +71,7 @@ export class DermService {
       let risk: 'low' | 'medium' | 'high' = 'low';
       if (
         topPrediction.confidence > 0.8 &&
-        topPrediction.class === 'melanoma'
+        topPrediction.class.toLowerCase().includes('melanoma')
       ) {
         risk = 'high';
       } else if (topPrediction.confidence > 0.5) {
@@ -61,10 +81,11 @@ export class DermService {
       // Symptom mapping
       let symptomNote = '';
       if (symptoms) {
-        if (symptoms.toLowerCase().includes('pain')) {
+        const lower = symptoms.toLowerCase();
+        if (lower.includes('pain')) {
           symptomNote =
             'Symptoms suggest possible severe condition; consult a doctor.';
-        } else if (symptoms.toLowerCase().includes('itching')) {
+        } else if (lower.includes('itching')) {
           symptomNote = 'Symptoms may indicate eczema or fungal infection.';
         }
       }
@@ -82,8 +103,10 @@ export class DermService {
         error.response?.data || error.message,
       );
       throw new Error(
-        'Analysis failed: ' + (error.response?.data?.message || error.message),
+        'Analysis failed: ' +
+          (error.response?.data?.message || error.message || 'Unknown error'),
       );
     }
   }
 }
+
