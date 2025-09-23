@@ -9,6 +9,7 @@ import * as bcrypt from 'bcrypt';
 import { Prisma, User } from '@prisma/client';
 import { LoginAuthDto } from 'src/auth/dto/login-auth.dto';
 import { JwtService } from '@nestjs/jwt';
+
 @Injectable()
 export class UsersService {
   constructor(
@@ -20,7 +21,6 @@ export class UsersService {
     loginAuthDto: LoginAuthDto,
   ): Promise<{ accessToken: string; user: Omit<User, 'password'> }> {
     const { email, password } = loginAuthDto;
-    console.log(loginAuthDto);
 
     if (!email || !password) {
       throw new BadRequestException('Invalid credentials', {
@@ -102,7 +102,7 @@ export class UsersService {
   }
 
   async update(
-    id: number,
+    id: string,
     updateDto: Prisma.UserUpdateInput,
     file: Express.Multer.File,
   ): Promise<{ user: Partial<User> | null }> {
@@ -152,7 +152,7 @@ export class UsersService {
     return { user: updateUser };
   }
 
-  async delete(id: number) {
+  async delete(id: string) {
     console.log(id);
     const user = await this.databaseService.user.findUnique({ where: { id } });
     console.table(user);

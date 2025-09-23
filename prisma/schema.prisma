@@ -14,12 +14,59 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 model User {
-  id              Int @id @default(autoincrement())
+  id              String    @id @default(cuid())
   email           String   @unique
   password        String
   name            String
   profilePicture  String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+    scans          Scan[]
 }
 
+model Scan {
+  id             String    @id @default(cuid())
+  userId         String
+  user           User      @relation(fields: [userId], references: [id])
+  imageUrl       String        // uploaded image location (S3, etc.)
+  imageQuality   String?       // e.g., "good", "blurry", "low-light"
+  confidence     Float         // 0-1 (AI confidence)
+  risk           RiskLevel
+  notes          String?       // AI or doctor notes
+  timestamp      DateTime  @default(now())
+  conditions     ScanCondition[]
+  symptoms       ScanSymptom[]
+}
+model ScanCondition {
+  id             String    @id @default(cuid())
+  scanId         String
+  conditionId    String
+  scan           Scan       @relation(fields: [scanId], references: [id])
+  condition      Condition  @relation(fields: [conditionId], references: [id])
+  confidence     Float  
+}
+model Condition {
+  id             String    @id @default(cuid())
+  name           String    @unique 
+  description    String?
+  scans          ScanCondition[]
+}
+model ScanSymptom {
+  id             String    @id @default(cuid())
+  scanId         String
+  symptomId      String
+  scan           Scan      @relation(fields: [scanId], references: [id])
+  symptom        Symptom   @relation(fields: [symptomId], references: [id])
+  severity       Int?   
+}
+model Symptom {
+  id             String    @id @default(cuid())
+  name           String    @unique 
+  scans          ScanSymptom[]
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+}

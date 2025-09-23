@@ -2,7 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import FormData from 'form-data';
-import sharp from 'sharp'; // <-- add this
+import sharp from 'sharp';
+import { DatabaseService } from 'src/database/database.service';
 
 export interface SkinAnalysisResult {
   conditions: string[];
@@ -14,10 +15,15 @@ export interface SkinAnalysisResult {
 
 @Injectable()
 export class DermService {
-  constructor(private readonly httpService: HttpService) {}
+  constructor(
+    private readonly httpService: HttpService,
+    private readonly databaseService: DatabaseService,
+  ) {}
 
   async analyzeSkin(
     imageBuffer: Buffer,
+    userId: string,
+    filename: string,
     symptoms?: string,
   ): Promise<SkinAnalysisResult> {
     console.log('fetched');
@@ -28,7 +34,8 @@ export class DermService {
         .toBuffer();
 
       // If still too large, reduce quality further
-      while (compressedBuffer.length > 5 * 1024 * 1024) { // 5MB
+      while (compressedBuffer.length > 5 * 1024 * 1024) {
+        // 5MB
         compressedBuffer = await sharp(compressedBuffer)
           .jpeg({ quality: 70 }) // keep lowering until under 5MB
           .toBuffer();
@@ -90,6 +97,27 @@ export class DermService {
         }
       }
 
+      await this.databaseService.scan.create({
+        data: {
+          userId,
+          imageUrl: `uploads/${filename}`,
+          confidence: topPrediction.confidence,
+          risk: risk.toUpperCase() as 'LOW' | 'MEDIUM' | 'HIGH',
+          notes: symptomNote,
+          conditions: {
+            create: results.map((r) => ({
+              condition: {
+                connectOrCreate: {
+                  where: { name: r.class },
+                  create: { name: r.class },
+                },
+              },
+              confidence: r.confidence,
+            })),
+          },
+        },
+      });
+
       return {
         conditions: results.map((r) => r.class),
         confidence: topPrediction.confidence,
@@ -108,5 +136,10 @@ export class DermService {
       );
     }
   }
+  async fetch() {
+    const history = await this.databaseService.scan.findMany({
+      orderBy: { timestamp: 'desc' },
+    });
+    return history;
+  }
 }
-

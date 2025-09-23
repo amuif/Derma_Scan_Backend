@@ -16,14 +16,14 @@ export class AuthService {
   }
 
   update(
-    id: number,
+    id: string,
     updateAuthDto: Prisma.UserUpdateInput,
     file: Express.Multer.File,
   ) {
     return this.usersService.update(id, updateAuthDto, file);
   }
 
-  remove(id: number) {
+  remove(id: string) {
     return this.usersService.delete(id);
   }
 }
