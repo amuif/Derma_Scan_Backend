@@ -8,11 +8,11 @@ import { existsSync, mkdirSync, readdirSync } from 'fs';
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
-  // Enable CORS
-  app.enableCors({
-    origin: ['*'],
-    credentials: true,
-  });
+
+app.enableCors({
+  origin: ['http://localhost:3000', 'https://derma-scan-webapp.vercel.app/'],
+  credentials: true,
+});
 
   app.setGlobalPrefix('api');
 

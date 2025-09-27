@@ -85,6 +85,7 @@ export class UsersService {
         name: createAuthDto.name,
         password: hashedPassword,
         profilePicture: filename ? `/uploads/${filename}` : null,
+        role: 'USER',
       },
       select: {
         id: true,
@@ -93,6 +94,7 @@ export class UsersService {
         createdAt: true,
         profilePicture: true,
         updatedAt: true,
+        role: true,
       },
     });
 

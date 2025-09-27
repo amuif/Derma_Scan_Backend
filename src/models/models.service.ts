@@ -97,6 +97,10 @@ export class DermService {
         }
       }
 
+      const uniqueResults = Array.from(
+        new Map(results.map((r) => [r.class.toLowerCase().trim(), r])).values(),
+      );
+
       await this.databaseService.scan.create({
         data: {
           userId,
@@ -105,19 +109,25 @@ export class DermService {
           risk: risk.toUpperCase() as 'LOW' | 'MEDIUM' | 'HIGH',
           notes: symptomNote,
           conditions: {
-            create: results.map((r) => ({
+            create: uniqueResults.map((r) => ({
               condition: {
                 connectOrCreate: {
-                  where: { name: r.class },
-                  create: { name: r.class },
+                  where: { name: r.class.trim() },
+                  create: { name: r.class.trim() },
                 },
               },
               confidence: r.confidence,
             })),
           },
         },
+        include: {
+          conditions: {
+            include: {
+              condition: true,
+            },
+          },
+        },
       });
-
       return {
         conditions: results.map((r) => r.class),
         confidence: topPrediction.confidence,
@@ -137,9 +147,20 @@ export class DermService {
     }
   }
   async fetch() {
-    const history = await this.databaseService.scan.findMany({
+    return this.databaseService.scan.findMany({
       orderBy: { timestamp: 'desc' },
+      include: {
+        conditions: {
+          include: {
+            condition: true,
+          },
+        },
+        symptoms: {
+          include: {
+            symptom: true,
+          },
+        },
+      },
     });
-    return history;
   }
 }
