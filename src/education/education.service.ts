@@ -58,11 +58,13 @@ export class EducationService {
               id: true,
               name: true,
               email: true,
+             profilePicture: true,
+
             },
           },
         },
       });
-      return { posts };
+      return  posts ;
     } catch (error) {
       console.log('Error at fetching education service, ', error);
       throw new NotFoundException();
@@ -79,11 +81,13 @@ export class EducationService {
               id: true,
               name: true,
               email: true,
+                            profilePicture: true,
+
             },
           },
         },
       });
-      return { posts };
+      return  posts ;
     } catch (error) {
       console.log('Error at fetching education service, ', error);
       throw new NotFoundException();
@@ -116,7 +120,7 @@ export class EducationService {
           },
         },
       });
-      return { post };
+      return  post ;
     } catch (error) {
       console.log('Error updating post', error);
       throw new BadRequestException();
