@@ -129,10 +129,10 @@ export class EducationService {
         where: { id },
       });
       if (!desiredPost) throw new NotFoundException();
-      const isDeleted = await this.databaseService.educationHub.delete({
+      await this.databaseService.educationHub.delete({
         where: { id },
       });
-      return { isDeleted };
+      return true;
     } catch (error) {
       console.log('Error deleting post', error);
       throw new BadRequestException();
