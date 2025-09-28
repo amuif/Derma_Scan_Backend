@@ -10,6 +10,7 @@ import { DermService } from './models.service';
 import * as fs from 'fs';
 import * as path from 'path';
 import { FileInterceptor } from '@nestjs/platform-express';
+
 interface AnalyzeSkinDto {
   image: string;
   symptoms?: string;
@@ -41,6 +42,12 @@ export class ModelsController {
       fileName,
       symptoms,
     );
+  }
+
+  @Post('/text')
+  async analyzeText(@Body() body: { prompt: string; userId: string }) {
+    console.log(body);
+    return this.modelsService.analyzeSkinViaText(body.prompt, body.userId);
   }
 
   @Get('/history')

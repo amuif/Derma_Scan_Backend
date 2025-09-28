@@ -83,15 +83,9 @@ model EducationHub {
   language  String
   author    User              @relation(fields: [authorId], references: [id])
   authorId  String
+  status    Status
   createdAt DateTime          @default(now())
   updatedAt DateTime          @updatedAt
-}
-
-enum EducationCategory {
-  tips
-  prevention
-  awareness
-  treatment
 }
 
 model Clinic {
@@ -102,6 +96,7 @@ model Clinic {
   email       String?
   website     String?
   specialties String[]
+  status      Status
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -110,4 +105,16 @@ enum RiskLevel {
   LOW    @map("low")
   MEDIUM @map("medium")
   HIGH   @map("high")
+}
+
+enum Status {
+  APPROVED @map("approved")
+  PENDING  @map("pending")
+}
+
+enum EducationCategory {
+  TIPS       @map("tips")
+  PREVENTION @map("prevntion")
+  AWARENESS  @map("awareness")
+  TREATMENT  @map("treamtment")
 }

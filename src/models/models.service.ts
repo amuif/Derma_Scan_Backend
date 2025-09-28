@@ -53,9 +53,7 @@ export class DermService {
         }>(
           `https://detect.roboflow.com/skin-cancer-recogniser/1?api_key=${process.env.ROBOFLOW_API_KEY}`,
           form as any,
-          {
-            headers: form.getHeaders(),
-          },
+          { headers: form.getHeaders() },
         ),
       );
 
@@ -162,5 +160,123 @@ export class DermService {
         },
       },
     });
+  }
+
+  async analyzeSkinViaText(prompt: string, userId: string) {
+    const textInput = `Classify the following description into possible skin-related categories. 
+Return ONLY valid JSON with no additional text, using this structure:
+{
+  "conditions": [],
+  "risk_level": "",
+  "confidence": 0,
+  "guidance": ""
+}
+
+case: ${prompt}`;
+
+    try {
+      const response = await fetch(
+        'https://openrouter.ai/api/v1/chat/completions',
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${process.env.OPEN_ROUTER_API_URL}`,
+            'Content-Type': 'application/json',
+            'HTTP-Referer': 'YOUR_SITE_URL', // Required by OpenRouter
+            'X-Title': 'Skin Analysis App', // Required by OpenRouter
+          },
+          body: JSON.stringify({
+            model: 'meta-llama/llama-3.3-70b-instruct:free',
+            messages: [
+              {
+                role: 'user',
+                content: textInput,
+              },
+            ],
+            max_tokens: 1000,
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`OpenRouter error: ${errorText}`);
+      }
+
+      const data = await response.json();
+      const analysis =
+        data?.choices?.[0]?.message?.content ?? 'No analysis available.';
+      console.log('Raw analysis:', analysis);
+
+      let jsonString = analysis.trim();
+      jsonString = jsonString.replace(/```json\s*|\s*```/g, '');
+
+      const parsedAnalysis = JSON.parse(jsonString);
+      console.log('Parsed analysis:', parsedAnalysis);
+
+      // Map risk level to match your Prisma enum
+      let risk: 'LOW' | 'MEDIUM' | 'HIGH' = 'LOW';
+      const riskLevel = parsedAnalysis.risk_level?.toLowerCase();
+      if (riskLevel?.includes('high')) {
+        risk = 'HIGH';
+      } else if (riskLevel?.includes('medium')) {
+        risk = 'MEDIUM';
+      }
+
+      await this.databaseService.scan.create({
+        data: {
+          userId,
+          imageUrl: 'text-analysis',
+          confidence: parsedAnalysis.confidence || 0,
+          risk: risk,
+          notes:
+            `${parsedAnalysis.guidance || ''} ${prompt ? `Symptoms: ${prompt}` : ''}`.trim(),
+          conditions: {
+            create:
+              parsedAnalysis.conditions?.map((condition: string) => ({
+                condition: {
+                  connectOrCreate: {
+                    where: { name: condition.trim() },
+                    create: { name: condition.trim() },
+                  },
+                },
+                confidence: parsedAnalysis.confidence || 0,
+              })) || [],
+          },
+          ...(prompt && {
+            symptoms: {
+              create: {
+                symptom: {
+                  connectOrCreate: {
+                    where: { name: prompt.trim() },
+                    create: { name: prompt.trim() },
+                  },
+                },
+                severity: 5,
+              },
+            },
+          }),
+        },
+        include: {
+          conditions: {
+            include: {
+              condition: true,
+            },
+          },
+          symptoms: {
+            include: {
+              symptom: true,
+            },
+          },
+        },
+      });
+
+      return {
+        analysis: parsedAnalysis,
+      };
+    } catch (error) {
+      console.log('Error at uploading text:', error);
+      return { error: 'Error uploading text input, please try again.' };
+    }
   }
 }
