@@ -17,6 +17,7 @@ export class ClinicsController {
 
   @Post('/create')
   create(@Body() createClinicDto: CreateClinicDto) {
+    console.log(createClinicDto)
     return this.clinicsService.create(createClinicDto);
   }
 

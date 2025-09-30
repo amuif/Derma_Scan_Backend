@@ -5,8 +5,6 @@ import {
   Patch,
   Param,
   Delete,
-  Req,
-  UseGuards,
   Get,
   UseInterceptors,
   UploadedFile,
@@ -14,8 +12,6 @@ import {
 import { AuthService } from './auth.service';
 import { LoginAuthDto } from './dto/login-auth.dto';
 import { Prisma } from '@prisma/client';
-import { AuthGuard } from '@nestjs/passport';
-import { type JwtPayload } from './get-user.decorator';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { multerConfig } from 'multer.config';
 
@@ -23,10 +19,9 @@ import { multerConfig } from 'multer.config';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @UseGuards(AuthGuard('jwt'))
-  @Get('me')
-  get(@Req() req: Request & { user: JwtPayload }) {
-    return req.user;
+  @Get(':id')
+  get(@Param('id') id: string) {
+    return this.authService.me(id);
   }
 
   @Post('/login')

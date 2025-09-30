@@ -148,9 +148,11 @@ export class DermService {
     return this.databaseService.scan.findMany({
       orderBy: { timestamp: 'desc' },
       include: {
+        user:true,
         conditions: {
           include: {
             condition: true,
+          
           },
         },
         symptoms: {

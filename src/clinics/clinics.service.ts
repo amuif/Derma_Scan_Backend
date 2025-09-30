@@ -34,7 +34,8 @@ export class ClinicsService {
           status: true,
         },
       });
-      return  clinic ;
+      console.log("Clinic created succeffully")
+      return clinic;
     } catch (error) {
       console.log('Error creating new clinic ', error);
       throw new BadRequestException();
@@ -47,7 +48,7 @@ export class ClinicsService {
         where: { status: 'APPROVED' },
       });
 
-      return  clinics ;
+      return clinics;
     } catch (error) {
       console.log('Error getting clinics', error);
       return new BadRequestException();
@@ -57,7 +58,7 @@ export class ClinicsService {
   async findAllForAdmin() {
     try {
       const clinics = await this.databaseService.clinic.findMany({});
-      return  clinics ;
+      return clinics;
     } catch (error) {
       console.log('Error getting clinics', error);
       return new BadRequestException();

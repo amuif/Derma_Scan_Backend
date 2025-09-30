@@ -17,6 +17,7 @@ export class EducationController {
 
   @Post('/create')
   create(@Body() createEducationDto: CreateEducationHubDto) {
+    console.log(createEducationDto)
     return this.educationService.create(createEducationDto);
   }
 
