@@ -39,11 +39,14 @@ export class EducationController {
     @Param('id') id: string,
     @Body() updateEducationDto: UpdateEducationDto,
   ) {
+    console.log(updateEducationDto)
     return this.educationService.update(id, updateEducationDto);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
+    console.log(id)
+
     return this.educationService.remove(id);
   }
 }
