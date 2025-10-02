@@ -34,7 +34,7 @@ export class ClinicsService {
           status: true,
         },
       });
-      console.log("Clinic created succeffully")
+      console.log('Clinic created succeffully');
       return clinic;
     } catch (error) {
       console.log('Error creating new clinic ', error);

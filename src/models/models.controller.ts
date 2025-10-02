@@ -15,10 +15,17 @@ interface AnalyzeSkinDto {
   image: string;
   symptoms?: string;
   userId: string;
+  consent: string;
 }
 @Controller('models')
 export class ModelsController {
   constructor(private readonly modelsService: DermService) {}
+
+  @Post('/check')
+  @UseInterceptors(FileInterceptor('file'))
+  async check(@UploadedFile() file: Express.Multer.File) {
+    return this.modelsService.checkImage(file);
+  }
 
   @Post('/image')
   @UseInterceptors(FileInterceptor('file'))
@@ -26,7 +33,7 @@ export class ModelsController {
     @UploadedFile() file: Express.Multer.File,
     @Body() body: AnalyzeSkinDto,
   ) {
-    const { userId, symptoms } = body;
+    const { userId, symptoms, consent } = body;
 
     const uploadDir = path.join(process.cwd(), 'uploads');
     if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
@@ -40,14 +47,15 @@ export class ModelsController {
       file.buffer,
       userId,
       fileName,
+      consent,
       symptoms,
     );
   }
 
   @Post('/text')
-  async analyzeText(@Body() body: { prompt: string; userId: string }) {
+  async analyzeText(@Body() body: { prompt: string; userId: string;consent:string }) {
     console.log(body);
-    return this.modelsService.analyzeSkinViaText(body.prompt, body.userId);
+    return this.modelsService.analyzeSkinViaText(body.prompt, body.userId,body.consent);
   }
 
   @Get('/history')

@@ -72,7 +72,7 @@ export class EducationService {
   async findAll() {
     try {
       const posts = await this.databaseService.educationHub.findMany({
-        where: { status: 'PENDING' },
+        where: { status: 'APPROVED' },
         orderBy: { createdAt: 'desc' },
         include: {
           author: {

@@ -19,6 +19,11 @@ import { multerConfig } from 'multer.config';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  @Get('/all')
+  getAll() {
+    return this.authService.all();
+  }
+
   @Get(':id')
   get(@Param('id') id: string) {
     return this.authService.me(id);

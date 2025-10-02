@@ -14,6 +14,9 @@ export class AuthService {
   create(createAuthDto: Prisma.UserCreateInput) {
     return this.usersService.create(createAuthDto);
   }
+  all() {
+    return this.usersService.getAllUsers();
+  }
   me(id: string) {
     return this.usersService.getUser(id);
   }
