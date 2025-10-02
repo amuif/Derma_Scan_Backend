@@ -53,9 +53,15 @@ export class ModelsController {
   }
 
   @Post('/text')
-  async analyzeText(@Body() body: { prompt: string; userId: string;consent:string }) {
+  async analyzeText(
+    @Body() body: { prompt: string; userId: string; consent: string },
+  ) {
     console.log(body);
-    return this.modelsService.analyzeSkinViaText(body.prompt, body.userId,body.consent);
+    return this.modelsService.analyzeSkinViaText(
+      body.prompt,
+      body.userId,
+      body.consent,
+    );
   }
 
   @Get('/history')

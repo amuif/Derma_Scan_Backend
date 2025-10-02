@@ -266,7 +266,7 @@ Return EXACTLY this JSON format and no extra text:
     });
   }
 
-  async analyzeSkinViaText(prompt: string, userId: string,consent:string) {
+  async analyzeSkinViaText(prompt: string, userId: string, consent: string) {
     const textInput = `Classify the following description into possible skin-related categories. 
 confidence between 0 and 1.
 Return ONLY valid JSON with no additional text, using this structure:
@@ -329,54 +329,54 @@ case: ${prompt}`;
       }
 
       console.log(userId);
-      if(consent === 'true'){
-              await this.databaseService.scan.create({
-        data: {
-          userId,
-          imageUrl: 'text-analysis',
-          confidence: parsedAnalysis.confidence || 0,
-          risk: risk,
-          notes:
-            `${parsedAnalysis.guidance || ''} ${prompt ? `Symptoms: ${prompt}` : ''}`.trim(),
-          conditions: {
-            create:
-              parsedAnalysis.conditions?.map((condition: string) => ({
-                condition: {
-                  connectOrCreate: {
-                    where: { name: condition.trim() },
-                    create: { name: condition.trim() },
+      if (consent === 'true') {
+        await this.databaseService.scan.create({
+          data: {
+            userId,
+            imageUrl: 'text-analysis',
+            confidence: parsedAnalysis.confidence || 0,
+            risk: risk,
+            notes:
+              `${parsedAnalysis.guidance || ''} ${prompt ? `Symptoms: ${prompt}` : ''}`.trim(),
+            conditions: {
+              create:
+                parsedAnalysis.conditions?.map((condition: string) => ({
+                  condition: {
+                    connectOrCreate: {
+                      where: { name: condition.trim() },
+                      create: { name: condition.trim() },
+                    },
                   },
+                  confidence: parsedAnalysis.confidence || 0,
+                })) || [],
+            },
+            ...(prompt && {
+              symptoms: {
+                create: {
+                  symptom: {
+                    connectOrCreate: {
+                      where: { name: prompt.trim() },
+                      create: { name: prompt.trim() },
+                    },
+                  },
+                  severity: 5,
                 },
-                confidence: parsedAnalysis.confidence || 0,
-              })) || [],
+              },
+            }),
           },
-          ...(prompt && {
-            symptoms: {
-              create: {
-                symptom: {
-                  connectOrCreate: {
-                    where: { name: prompt.trim() },
-                    create: { name: prompt.trim() },
-                  },
-                },
-                severity: 5,
+          include: {
+            conditions: {
+              include: {
+                condition: true,
               },
             },
-          }),
-        },
-        include: {
-          conditions: {
-            include: {
-              condition: true,
+            symptoms: {
+              include: {
+                symptom: true,
+              },
             },
           },
-          symptoms: {
-            include: {
-              symptom: true,
-            },
-          },
-        },
-      });
+        });
       }
       return {
         analysis: parsedAnalysis,

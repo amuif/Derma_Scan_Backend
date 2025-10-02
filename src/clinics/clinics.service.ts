@@ -92,6 +92,7 @@ export class ClinicsService {
   }
 
   async remove(id: string) {
+    console.log("Deleting clinic")
     try {
       const clinic = await this.databaseService.clinic.findUnique({
         where: { id },

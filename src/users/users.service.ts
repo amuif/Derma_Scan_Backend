@@ -105,16 +105,19 @@ export class UsersService {
 
   async getAllUsers() {
     const users = await this.databaseService.user.findMany({
-      omit:{
-        password:true
-      }
+      omit: {
+        password: true,
+      },
     });
     return users;
   }
   async getUser(id: string) {
-    const user = await this.databaseService.user.findUnique({ where: { id },   omit:{
-        password:true
-      }});
+    const user = await this.databaseService.user.findUnique({
+      where: { id },
+      omit: {
+        password: true,
+      },
+    });
     if (!user) {
       throw new NotFoundException('User not found');
     }

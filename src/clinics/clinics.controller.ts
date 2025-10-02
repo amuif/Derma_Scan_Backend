@@ -33,6 +33,7 @@ export class ClinicsController {
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateClinicDto: UpdateClinicDto) {
+    console.log(updateClinicDto)
     return this.clinicsService.update(id, updateClinicDto);
   }
 
