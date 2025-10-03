@@ -24,7 +24,7 @@ export class ModelsController {
   @Post('/check')
   @UseInterceptors(FileInterceptor('file'))
   async check(@UploadedFile() file: Express.Multer.File) {
-    console.log("Recieved file..")
+    console.log('Recieved file..');
     return this.modelsService.checkImage(file);
   }
 
