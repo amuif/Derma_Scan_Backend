@@ -177,7 +177,7 @@ export class UsersService {
   async delete(id: string) {
     console.log(id);
     const user = await this.databaseService.user.findUnique({ where: { id } });
-    console.log(user)
+    console.log(user);
     if (!user) {
       throw new NotFoundException('user not found');
     }
