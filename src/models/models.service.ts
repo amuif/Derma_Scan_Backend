@@ -33,13 +33,12 @@ Return EXACTLY this JSON format and no extra text:
 }
 `;
 
-      // Compose the data URI with base64
       const b64 = file.buffer.toString('base64');
-      const mimeType = file.mimetype || 'image/jpeg'; // e.g. 'image/jpeg'
+      const mimeType = file.mimetype || 'image/jpeg';
       const dataUrl = `data:${mimeType};base64,${b64}`;
 
       const body = {
-        model: 'x-ai/grok-4-fast:free', // pick a vision-capable model
+        model: 'google/gemma-3-12b-it:free',
         messages: [
           {
             role: 'user',
