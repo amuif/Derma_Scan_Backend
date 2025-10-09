@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import FormData from 'form-data';
@@ -6,6 +6,7 @@ import sharp from 'sharp';
 import { DatabaseService } from 'src/database/database.service';
 
 export interface SkinAnalysisResult {
+  id: string;
   conditions: string[];
   confidence: number;
   risk: 'low' | 'medium' | 'high';
@@ -146,7 +147,28 @@ Return EXACTLY this JSON format and no extra text:
       console.log('Roboflow predictions:', results);
 
       if (!results || results.length === 0) {
+        const scanned = await this.databaseService.scan.create({
+          data: {
+            userId,
+            imageUrl: `uploads/${filename}`,
+            conditions: {
+              create: [],
+            },
+            confidence: 0,
+            risk: 'LOW',
+            notes: 'No clear prediction returned by model.',
+            timestamp: new Date(),
+          },
+          include: {
+            conditions: {
+              include: {
+                condition: true,
+              },
+            },
+          },
+        });
         return {
+          id: scanned.id,
           conditions: [],
           confidence: 0,
           risk: 'low',
@@ -197,38 +219,37 @@ Return EXACTLY this JSON format and no extra text:
       const uniqueResults = Array.from(
         new Map(results.map((r) => [r.class.toLowerCase().trim(), r])).values(),
       );
-      if (consent === 'true') {
-        console.log('creating');
-        await this.databaseService.scan.create({
-          data: {
-            userId,
-            imageUrl: `uploads/${filename}`,
-            confidence: topPrediction.confidence,
-            risk: risk.toUpperCase() as 'LOW' | 'MEDIUM' | 'HIGH',
-            notes: symptomNote,
-            conditions: {
-              create: uniqueResults.map((r) => ({
-                condition: {
-                  connectOrCreate: {
-                    where: { name: r.class.trim() },
-                    create: { name: r.class.trim() },
-                  },
+      console.log('creating');
+      const scanned = await this.databaseService.scan.create({
+        data: {
+          userId,
+          imageUrl: `uploads/${filename}`,
+          confidence: topPrediction.confidence,
+          risk: risk.toUpperCase() as 'LOW' | 'MEDIUM' | 'HIGH',
+          notes: symptomNote,
+          conditions: {
+            create: uniqueResults.map((r) => ({
+              condition: {
+                connectOrCreate: {
+                  where: { name: r.class.trim() },
+                  create: { name: r.class.trim() },
                 },
-                confidence: r.confidence,
-              })),
-            },
-          },
-          include: {
-            conditions: {
-              include: {
-                condition: true,
               },
+              confidence: r.confidence,
+            })),
+          },
+        },
+        include: {
+          conditions: {
+            include: {
+              condition: true,
             },
           },
-        });
-      }
+        },
+      });
 
       return {
+        id: scanned.id,
         conditions: results.map((r) => r.class),
         confidence: topPrediction.confidence,
         risk,
@@ -248,6 +269,7 @@ Return EXACTLY this JSON format and no extra text:
   }
   async fetch() {
     return this.databaseService.scan.findMany({
+      where: { approved: true },
       orderBy: { timestamp: 'desc' },
       include: {
         user: true,
@@ -263,6 +285,22 @@ Return EXACTLY this JSON format and no extra text:
         },
       },
     });
+  }
+  async approveScan(scanID: string) {
+    const scan = await this.databaseService.scan.findUnique({
+      where: { id: scanID },
+    });
+
+    if (!scan) {
+      throw new NotFoundException('Scan not found');
+    }
+
+    const updatedScan = await this.databaseService.scan.update({
+      where: { id: scanID },
+      data: { approved: true },
+    });
+
+    return updatedScan;
   }
 
   async analyzeSkinViaText(prompt: string, userId: string, consent: string) {

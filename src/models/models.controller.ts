@@ -5,6 +5,7 @@ import {
   Get,
   UseInterceptors,
   UploadedFile,
+  Patch,
 } from '@nestjs/common';
 import { DermService } from './models.service';
 import * as fs from 'fs';
@@ -64,7 +65,10 @@ export class ModelsController {
       body.consent,
     );
   }
-
+  @Patch('/approve')
+  async approveScan(@Body() body: { scanId: string }) {
+    return this.modelsService.approveScan(body.scanId);
+  }
   @Get('/history')
   fetch() {
     return this.modelsService.fetch();

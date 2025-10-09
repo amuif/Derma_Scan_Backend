@@ -28,12 +28,13 @@ model User {
 model Scan {
   id           String          @id @default(uuid())
   userId       String
-  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   imageUrl     String
   imageQuality String?
   confidence   Float
   risk         RiskLevel
   notes        String?
+  approved     Boolean         @default(false)
   timestamp    DateTime        @default(now())
   conditions   ScanCondition[]
   symptoms     ScanSymptom[]
