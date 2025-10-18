@@ -373,7 +373,7 @@ case: ${prompt}`;
           imageUrl: 'text-analysis',
           confidence: parsedAnalysis.confidence || 0,
           risk: risk,
-          question:prompt,
+          question: prompt,
           notes:
             `${parsedAnalysis.guidance || ''} ${prompt ? `Symptoms: ${prompt}` : ''}`.trim(),
           conditions: {
