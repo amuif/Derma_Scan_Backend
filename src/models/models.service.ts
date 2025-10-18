@@ -109,7 +109,6 @@ Return EXACTLY this JSON format and no extra text:
     imageBuffer: Buffer,
     userId: string,
     filename: string,
-    consent: string,
     symptoms?: string,
   ): Promise<SkinAnalysisResult> {
     console.log('fetched');
@@ -219,6 +218,7 @@ Return EXACTLY this JSON format and no extra text:
       const uniqueResults = Array.from(
         new Map(results.map((r) => [r.class.toLowerCase().trim(), r])).values(),
       );
+      console.log(uniqueResults);
       console.log('creating');
       const scanned = await this.databaseService.scan.create({
         data: {
@@ -250,7 +250,7 @@ Return EXACTLY this JSON format and no extra text:
 
       return {
         id: scanned.id,
-        conditions: results.map((r) => r.class),
+        conditions: uniqueResults.map((r) => r.class),
         confidence: topPrediction.confidence,
         risk,
         symptomNote,
@@ -299,11 +299,12 @@ Return EXACTLY this JSON format and no extra text:
       where: { id: scanID },
       data: { approved: true },
     });
+    console.log('updatedScan', updatedScan);
 
     return updatedScan;
   }
 
-  async analyzeSkinViaText(prompt: string, userId: string, consent: string) {
+  async analyzeSkinViaText(prompt: string, userId: string) {
     const textInput = `Classify the following description into possible skin-related categories. 
 confidence between 0 and 1.
 Return ONLY valid JSON with no additional text, using this structure:
@@ -366,56 +367,55 @@ case: ${prompt}`;
       }
 
       console.log(userId);
-      if (consent === 'true') {
-        await this.databaseService.scan.create({
-          data: {
-            userId,
-            imageUrl: 'text-analysis',
-            confidence: parsedAnalysis.confidence || 0,
-            risk: risk,
-            notes:
-              `${parsedAnalysis.guidance || ''} ${prompt ? `Symptoms: ${prompt}` : ''}`.trim(),
-            conditions: {
-              create:
-                parsedAnalysis.conditions?.map((condition: string) => ({
-                  condition: {
-                    connectOrCreate: {
-                      where: { name: condition.trim() },
-                      create: { name: condition.trim() },
-                    },
+      const scan = await this.databaseService.scan.create({
+        data: {
+          userId,
+          imageUrl: 'text-analysis',
+          confidence: parsedAnalysis.confidence || 0,
+          risk: risk,
+          notes:
+            `${parsedAnalysis.guidance || ''} ${prompt ? `Symptoms: ${prompt}` : ''}`.trim(),
+          conditions: {
+            create:
+              parsedAnalysis.conditions?.map((condition: string) => ({
+                condition: {
+                  connectOrCreate: {
+                    where: { name: condition.trim() },
+                    create: { name: condition.trim() },
                   },
-                  confidence: parsedAnalysis.confidence || 0,
-                })) || [],
-            },
-            ...(prompt && {
-              symptoms: {
-                create: {
-                  symptom: {
-                    connectOrCreate: {
-                      where: { name: prompt.trim() },
-                      create: { name: prompt.trim() },
-                    },
-                  },
-                  severity: 5,
                 },
-              },
-            }),
+                confidence: parsedAnalysis.confidence || 0,
+              })) || [],
           },
-          include: {
-            conditions: {
-              include: {
-                condition: true,
-              },
-            },
+          ...(prompt && {
             symptoms: {
-              include: {
-                symptom: true,
+              create: {
+                symptom: {
+                  connectOrCreate: {
+                    where: { name: prompt.trim() },
+                    create: { name: prompt.trim() },
+                  },
+                },
+                severity: 5,
               },
             },
+          }),
+        },
+        include: {
+          conditions: {
+            include: {
+              condition: true,
+            },
           },
-        });
-      }
+          symptoms: {
+            include: {
+              symptom: true,
+            },
+          },
+        },
+      });
       return {
+        id: scan.id,
         analysis: parsedAnalysis,
       };
     } catch (error) {

@@ -35,7 +35,7 @@ export class ModelsController {
     @UploadedFile() file: Express.Multer.File,
     @Body() body: AnalyzeSkinDto,
   ) {
-    const { userId, symptoms, consent } = body;
+    const { userId, symptoms } = body;
 
     const uploadDir = path.join(process.cwd(), 'uploads');
     if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
@@ -49,7 +49,6 @@ export class ModelsController {
       file.buffer,
       userId,
       fileName,
-      consent,
       symptoms,
     );
   }
@@ -59,11 +58,7 @@ export class ModelsController {
     @Body() body: { prompt: string; userId: string; consent: string },
   ) {
     console.log(body);
-    return this.modelsService.analyzeSkinViaText(
-      body.prompt,
-      body.userId,
-      body.consent,
-    );
+    return this.modelsService.analyzeSkinViaText(body.prompt, body.userId);
   }
   @Patch('/approve')
   async approveScan(@Body() body: { scanId: string }) {
