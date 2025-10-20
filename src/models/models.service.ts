@@ -32,6 +32,13 @@ Return EXACTLY this JSON format and no extra text:
   "message": "...",
   "timestamp": "ISO string"
 }
+if no skin is detected return with 
+{
+  "conditions": ["No skin detected"],
+  "confidence": 0.0,
+  "message": "No skin condition detected",
+  "timestamp": "ISO string"
+}
 `;
 
       const b64 = file.buffer.toString('base64');
