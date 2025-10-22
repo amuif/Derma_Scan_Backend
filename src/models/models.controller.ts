@@ -6,6 +6,7 @@ import {
   UseInterceptors,
   UploadedFile,
   Patch,
+  Query,
 } from '@nestjs/common';
 import { DermService } from './models.service';
 import * as fs from 'fs';
@@ -69,7 +70,7 @@ export class ModelsController {
     return this.modelsService.fetch();
   }
   @Get('/personal/history')
-  selfFetch(@Body() body: { userId: string }) {
-    return this.modelsService.personnalFetch(body.userId);
+  selfFetch(@Query('userId') userId: string) {
+    return this.modelsService.personnalFetch(userId);
   }
 }
