@@ -274,6 +274,25 @@ if no skin is detected return with
       );
     }
   }
+  async personnalFetch(userId: string) {
+    return this.databaseService.scan.findMany({
+      where: { userId: userId },
+      orderBy: { timestamp: 'desc' },
+      include: {
+        user: true,
+        conditions: {
+          include: {
+            condition: true,
+          },
+        },
+        symptoms: {
+          include: {
+            symptom: true,
+          },
+        },
+      },
+    });
+  }
   async fetch() {
     return this.databaseService.scan.findMany({
       where: { approved: true },

@@ -68,4 +68,8 @@ export class ModelsController {
   fetch() {
     return this.modelsService.fetch();
   }
+  @Get('/personal/history')
+  selfFetch(@Body() body: { userId: string }) {
+    return this.modelsService.personnalFetch(body.userId);
+  }
 }
